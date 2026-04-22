@@ -43,6 +43,22 @@ public class TaskManagerCli {
         }
     }
 
+    /**
+ * Dispatches the specified command to its corresponding handler method.
+ * * This function acts as a centralized command router for the application. It 
+ * evaluates the input string against a set of predefined keywords and forwards 
+ * the provided arguments to the appropriate logic handler. If an unrecognized 
+ * command is provided, it outputs an error message and a list of valid commands 
+ * to the standard error stream.
+ *
+ * @param command The primary action keyword (e.g., "create", "list", "delete") 
+ * used to determine which operation to perform.
+ * @param args    A string array containing the supplemental arguments or flags 
+ * required for the specific command.
+ * * @throws NullPointerException if {@code command} is null (standard switch behavior 
+ * in Java 7+).
+ */
+
     private static void executeCommand(String command, String[] args) {
         switch (command) {
             case "create":
@@ -81,25 +97,37 @@ public class TaskManagerCli {
         }
     }
 
-    private static void handleCreateCommand(String[] args) {
-        if (args.length < 1) {
-            System.err.println("Usage: create <title> [description] [priority] [due_date] [tags]");
-            return;
-        }
-
-        String title = args[0];
-        String description = args.length > 1 ? args[1] : "";
-        int priority = args.length > 2 ? Integer.parseInt(args[2]) : 2;
-        String dueDate = args.length > 3 ? args[3] : null;
-        List<String> tags = args.length > 4 ?
-                Arrays.asList(args[4].split(",")).stream().map(String::trim).collect(Collectors.toList()) :
-                null;
-
-        String taskId = taskManager.createTask(title, description, priority, dueDate, tags);
-        if (taskId != null) {
-            System.out.println("Created task with ID: " + taskId);
-        }
+   private static void handleCreateCommand(String[] args) {
+    // 1. Minimum requirement check: Every task must have at least a title
+    if (args.length < 1) {
+        System.err.println("Usage: create <title> [description] [priority] [due_date] [tags]");
+        return;
     }
+
+    String title = args[0];
+    String description = args.length > 1 ? args[1] : "";
+    
+    // 2. Parse priority with a default of 2 (Medium). 
+    // Note: This may throw NumberFormatException if args[2] is not numeric.
+    int priority = args.length > 2 ? Integer.parseInt(args[2]) : 2;
+    
+    String dueDate = args.length > 3 ? args[3] : null;
+
+    // 3. Process comma-separated tags into a cleaned List
+    // Maps " tag1, tag2 " -> ["tag1", "tag2"]
+    List<String> tags = args.length > 4 ?
+            Arrays.asList(args[4].split(",")).stream()
+                  .map(String::trim)
+                  .collect(Collectors.toList()) :
+            null;
+
+    // 4. Delegate to the persistence layer
+    String taskId = taskManager.createTask(title, description, priority, dueDate, tags);
+    
+    if (taskId != null) {
+        System.out.println("Created task with ID: " + taskId);
+    }
+}
 
     private static void handleListCommand(String[] args) {
         Options options = new Options();
